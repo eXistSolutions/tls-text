@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+    <description>App for Viewing and Searching TLS Documents</description>
+    <website/>
+    <status/>
+    <license>GNU-LGPL</license>
+    <copyright>true</copyright>
+    <type>application</type>
+    <target>tls-text</target>
+    <prepare>pre-install.xql</prepare>
+    <finish>post-install.xql</finish>
+    <deployed>2015-12-03T14:25:15.259+01:00</deployed>
+</meta>
