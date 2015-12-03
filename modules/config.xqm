@@ -10,10 +10,30 @@ declare namespace templates="http://exist-db.org/xquery/templates";
 
 declare namespace repo="http://exist-db.org/xquery/repo";
 declare namespace expath="http://expath.org/ns/pkg";
+declare namespace functx = "http://www.functx.com";
 
 (: 
     Determine the application root collection from the current module load path.
 :)
+
+declare function functx:substring-before-last
+  ( $arg as xs:string? ,
+    $delim as xs:string )  as xs:string {
+
+   if (matches($arg, functx:escape-for-regex($delim)))
+   then replace($arg,
+            concat('^(.*)', functx:escape-for-regex($delim),'.*'),
+            '$1')
+   else ''
+ } ;
+
+declare function functx:escape-for-regex
+  ( $arg as xs:string? )  as xs:string {
+
+   replace($arg,
+           '(\.|\[|\]|\\|\||\-|\^|\$|\?|\*|\+|\{|\}|\(|\))','\\$1')
+ };
+
 declare variable $config:app-root := 
     let $rawPath := system:get-module-load-path()
     let $modulePath :=
@@ -29,7 +49,8 @@ declare variable $config:app-root :=
         substring-before($modulePath, "/modules")
 ;
 
-declare variable $config:data-root := $config:app-root || "/data";
+declare variable $config:remote-root:= functx:substring-before-last($config:app-root,"/") || "/" || "tls-data";
+declare variable $config:data-root := $config:remote-root || "/core/texts/chant";
 
 declare variable $config:odd := "tls.odd";
 
