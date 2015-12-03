@@ -147,6 +147,7 @@ function app:checkbox($node as node(), $model as map(*), $target-texts as xs:str
  : 
  :)
 declare function app:work-title($node as node(), $model as map(*), $type as xs:string?) {
+    let $log := util:log("DEBUG", ("##$config:app-root): ", $config:app-root))
     let $suffix := if ($type) then "." || $type else ()
     let $work := $model("work")/ancestor-or-self::tei:TEI
     let $id := util:document-name($work)
@@ -236,24 +237,20 @@ declare function app:fix-links($nodes as node()*) {
 : @author Jens Østergaard Petersen
 : @param $node 
 : @param $model
-: @param $query The query string. This string is transformed into a <query> element containing one or two <bool> elements in a Lucene query and it is transformed into a sequence of one or two query strings in an ngram query. The first <bool> and the first string contain the query as input and the second the query as transliterated into Devanagari or IAST as determined by $query-scripts. One <bool> and one query string may be empty.
+: @param $query The query string. 
 : @param $index The index against which the query is to be performed, as the string "ngram" or "lucene".
-: @param $lucene-query-mode If a Lucene query is performed, which of the options "any", "all", "phrase", "near-ordered", "near-unordered", "fuzzy", or "regex" have been selected (note that wildcard is not implemented, due to its syntactic overlap with regex).
 : @param $tei-target A sequence of one or more targets within a TEI document, the tei:teiHeader or tei:text.
 : @param $work-authors A sequence of the string "all" or of the xml:ids of the documents associated with the selected authors.
-: @param $query-scripts A sequence of the string "all" or of the values "sa-Latn" or "sa-Deva", indicating whether or not the user wishes to transliterate the query string.
 : @param $target-texts A sequence of the string "all" or of the xml:ids of the documents selected.
 
 : @return The function returns a map containing the $hits, the $query, and the $query-scope. The search results are output through the nested templates, app:hit-count, app:paginate, and app:show-hits.
 :)
 declare 
-    %templates:default("lucene-query-mode", "any")
     %templates:default("tei-target", "tei-text")
     %templates:default("query-scope", "narrow")
     %templates:default("work-authors", "all")
-    %templates:default("query-scripts", "all")
     %templates:default("target-texts", "all")
-function app:query($node as node()*, $model as map(*), $query as xs:string?, $lucene-query-mode as xs:string, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $query-scripts as xs:string, $target-texts as xs:string+) as map(*) {
+function app:query($node as node()*, $model as map(*), $query as xs:string?, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $target-texts as xs:string+) as map(*) {
         (:If there is no query string, fill up the map with existing values:)
         if (empty($query))
         then
@@ -266,7 +263,6 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $lu
         else
             (:Otherwise, perform the query.:)
             (: Here the actual query commences. This is split into two parts, the first for a Lucene query and the second for an ngram query. :)
-            (:The query passed to a Luecene query in ft:query is an XML element <query> containing one or two <bool>. The <bool> contain the original query and the transliterated query, as indicated by the user in $query-scripts.:)
             let $hits :=
                     (:If the $query-scope is narrow, query the elements immediately below the lowest div in tei:text and the four major element below tei:teiHeader.:)
                     for $hit in 
