@@ -48,76 +48,76 @@
                     </div-->
                 </div>
             </div>
-        </form>
-        <div class="col-md-9 col-md-pull-3">
-            <div class="container-fluid"><!--div class="row">
-                    <div class="col-md-4">
-                        <form action="" class="form-inline">
-                            <select name="browse" class="form-control" data-template="templates:form-control">
-                                <option value="author">Author</option>
-                                <option value="title">Title</option>
-                                <option value="file">Filename</option>
-                            </select>
-                            <span class="input-group">
-                                <input type="text" name="filter" class="form-control typeahead-meta" data-template="templates:form-control" autocomplete="off"/>
-                                <span class="input-group-btn">
-                                    <button id="f-btn-search" type="submit" class="btn btn-primary">
-                                        <span class="fa fa-search"/>
-                                    </button>
+            <div class="col-md-9 col-md-pull-3">
+                <div class="container-fluid"><!--div class="row">
+                        <div class="col-md-4">
+                            <form action="" class="form-inline">
+                                <select name="browse" class="form-control" data-template="templates:form-control">
+                                    <option value="author">Author</option>
+                                    <option value="title">Title</option>
+                                    <option value="file">Filename</option>
+                                </select>
+                                <span class="input-group">
+                                    <input type="text" name="filter" class="form-control typeahead-meta" data-template="templates:form-control" autocomplete="off"/>
+                                    <span class="input-group-btn">
+                                        <button id="f-btn-search" type="submit" class="btn btn-primary">
+                                            <span class="fa fa-search"/>
+                                        </button>
+                                    </span>
                                 </span>
-                            </span>
-                        </form>
-                    </div>
-                </div-->
-                <div class="row">
-                    <div class="col-md-12" data-template="app:list-works">
-                        <h5>Browsing <span class="result-count text-success">
-                                <span id="hit-count" data-template="app:hit-count" data-template-key="all"/> documents.</span>
-                        </h5>
-                        <ul class="pagination" data-template="app:paginate" data-template-per-page="20" data-template-max-pages="5" data-template-min-hits="21" data-template-key="all"/>
-                        <table class="browse table">
-                            <thead>
-                                <tr>
-                                    <th/>
-                                    <th>Title</th>
-                                    <th>Author</th>
-                                    <th>Edition</th>
-                                    <th/>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr data-template="app:browse" data-template-per-page="20">
-                                    <td>
-                                        <input type="checkbox" name="target-texts" data-template="app:checkbox"/>
-                                    </td>
-                                    <td>
-                                        <a href="" data-template="app:work-title"/>
-                                    </td>
-                                    <td>
-                                        <a href="" data-template="app:work-author"/>
-                                    </td>
-                                    <td data-template="app:work-edition"/>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a class="btn btn-default download-link" data-template="app:download-link" data-template-type="pdf" title="Download as PDF">
-                                                <i class="fa fa-file-pdf-o"/>
-                                            </a><!--a class="btn btn-default download-link" data-template="app:download-link" data-template-type="tex" title="Download as LaTeX PDF">
-                                                <i class="fa fa-leanpub"/>
-                                            </a>
-                                            <a class="btn btn-default download-link" data-template="app:download-link" data-template-type="epub" title="Download as epub ebook">
-                                                <i class="fa fa-book"/>
-                                            </a-->
-                                            <a class="btn btn-default" data-template="pages:xml-link" title="View TEI XML">
-                                                <i class="fa fa-file-code-o"/>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                            </form>
+                        </div>
+                    </div-->
+                    <div class="row">
+                        <div class="col-md-12" data-template="app:list-works">
+                            <h5>Browsing <span class="result-count text-success">
+                                    <span id="hit-count" data-template="app:hit-count" data-template-key="all"/> documents.</span>
+                            </h5>
+                            <ul class="pagination" data-template="app:paginate" data-template-per-page="20" data-template-max-pages="5" data-template-min-hits="21" data-template-key="all"/>
+                            <table class="browse table">
+                                <thead>
+                                    <tr>
+                                        <th/>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Edition</th>
+                                        <th/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-template="app:browse" data-template-per-page="20">
+                                        <td>
+                                            <input type="checkbox" name="target-texts" data-template="app:checkbox"/>
+                                        </td>
+                                        <td>
+                                            <a href="" data-template="app:work-title"/>
+                                        </td>
+                                        <td>
+                                            <a href="" data-template="app:work-author"/>
+                                        </td>
+                                        <td data-template="app:work-edition"/>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a class="btn btn-default download-link" data-template="app:download-link" data-template-type="pdf" title="Download as PDF">
+                                                    <i class="fa fa-file-pdf-o"/>
+                                                </a><!--a class="btn btn-default download-link" data-template="app:download-link" data-template-type="tex" title="Download as LaTeX PDF">
+                                                    <i class="fa fa-leanpub"/>
+                                                </a>
+                                                <a class="btn btn-default download-link" data-template="app:download-link" data-template-type="epub" title="Download as epub ebook">
+                                                    <i class="fa fa-book"/>
+                                                </a-->
+                                                <a class="btn btn-default" data-template="pages:xml-link" title="View TEI XML">
+                                                    <i class="fa fa-file-code-o"/>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
