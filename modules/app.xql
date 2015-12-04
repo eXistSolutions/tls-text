@@ -9,6 +9,30 @@ import module namespace pages="http://existsolutions.com/apps/TLS/texts/pages" a
 
 declare namespace expath="http://expath.org/ns/pkg";
 declare namespace tei="http://www.tei-c.org/ns/1.0";
+declare namespace functx="http://www.functx.com";
+
+(:modified by applying functx:escape-for-regex() :)
+declare %private function functx:number-of-matches 
+  ( $arg as xs:string? ,
+    $pattern as xs:string )  as xs:integer {
+       
+   count(tokenize(functx:escape-for-regex(functx:escape-for-regex($arg)),functx:escape-for-regex($pattern))) - 1
+ } ;
+
+declare %private function functx:contains-any-of
+  ( $arg as xs:string? ,
+    $searchStrings as xs:string* )  as xs:boolean {
+
+   some $searchString in $searchStrings
+   satisfies contains($arg,$searchString)
+ } ;
+
+declare %private function functx:escape-for-regex
+  ( $arg as xs:string? )  as xs:string {
+
+   replace($arg,
+           '(\.|\[|\]|\\|\||\-|\^|\$|\?|\*|\+|\{|\}|\(|\))','\\$1')
+ } ;
 
 (:~
  : List documents in data collection
@@ -294,16 +318,23 @@ declare
     %templates:default("query-scope", "narrow")
     %templates:default("work-authors", "all")
     %templates:default("target-texts", "all")
-function app:query($node as node()*, $model as map(*), $query as xs:string?, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $target-texts as xs:string+) as map(*) {
-        (:If there is no query string, fill up the map with existing values:)
+    %templates:default("bool", "new")
+function app:query($node as node()*, $model as map(*), $query as xs:string?, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $target-texts as xs:string+, $bool as xs:string?) as map(*) {
+        let $query := 
+            if ($query) 
+            then app:convert-query-to-phrase-query(app:sanitize-query($query)) 
+            else ()
+        return
+        (:If there is no query string, fill up the map with any existing values (but do not sanitize it once again):)
         if (empty($query))
         then
             map {
-                "hits" := session:get-attribute("apps.simple"),
+                "hits" := session:get-attribute("apps.simple.hits"),
                 "hitCount" := session:get-attribute("apps.simple.hitCount"),
                 "query" := session:get-attribute("apps.simple.query"),
-                "scope" := $query-scope,
-                "target-texts" := session:get-attribute("apps.simple.target-texts")
+                "scope" := session:get-attribute("apps.simple.scope"),
+                "target-texts" := session:get-attribute("apps.simple.target-texts"),
+                "bool" := session:get-attribute("apps.simple.bool")
             }
         else
             (:Otherwise, perform the query.:)
@@ -327,15 +358,40 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                                 else ()    
                     order by ft:score($hit) descending
                     return $hit
+                        let $query :=
+                            if ($bool eq 'new')
+                            then $query
+                            else
+                                if ($bool eq 'and')
+                                then session:get-attribute("apps.simple.query") || ' AND ' || $query
+                                else
+                                    if ($bool eq 'or')
+                                    then session:get-attribute("apps.simple.query") || ' OR ' || $query
+                                    else
+                                        if ($bool eq 'not')
+                                        then session:get-attribute("apps.simple.query") || ' NOT ' || $query
+                                        else $query
+            let $hits :=
+                if ($bool eq 'or')
+                then session:get-attribute("apps.simple.hits") union $hits
+                else 
+                    if ($bool eq 'and')
+                    then session:get-attribute("apps.simple.hits") intersect $hits
+                    else
+                        if ($bool eq 'not')
+                        then session:get-attribute("apps.simple.hits") except $hits
+                        else $hits
+            (:Store the result in the session.:)
             let $hitCount := count($hits)
             let $hits := if ($hitCount > 1000) then subsequence($hits, 1, 1000) else $hits
             (:Store the result in the session.:)
             let $store := (
-                session:set-attribute("apps.simple", $hits),
+                session:set-attribute("apps.simple.hits", $hits),
                 session:set-attribute("apps.simple.hitCount", $hitCount),
                 session:set-attribute("apps.simple.query", $query),
                 session:set-attribute("apps.simple.scope", $query-scope),
-                session:set-attribute("apps.simple.target-texts", $target-texts)
+                session:set-attribute("apps.simple.target-texts", $target-texts),
+                session:set-attribute("apps.simple.bool", $bool)
                 )
             return
                 (: The hits are not returned directly, but processed by the nested templates :)
@@ -346,6 +402,69 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                 }
 };
 
+
+(:convert text queries into phrase queries by default:)
+declare function app:convert-query-to-phrase-query($query as xs:string) as xs:string {
+    let $query-parts := tokenize($query, '\s+')
+    return
+        string-join(
+        for $query-part in $query-parts
+        return 
+            if (
+                (
+                    $query-part = ('AND', 'OR', 'NOT') or 
+                    (:if the first character, including any + or - or ' or ", is not a Chinese character, don't alter the query, assuming that the rest will be the same:)
+                    (:if users employ +, -, ' or ", they must know what they are doing:)
+                    string-to-codepoints(substring($query-part, 1)) < 13312
+                )
+                (:if the length of the query part, including any + or - or ' or ", is greater than 1, don't alter the query:)
+                and string-length($query-part) > 1
+                )
+            then $query-part
+            else '"' || app:sanitize-query-part($query-part) || '"'
+        , ' ')
+};
+
+declare function app:sanitize-query-part($query as xs:string?) as xs:string? {
+    if (functx:contains-any-of($query, ('{', '}', '[', ']')))
+        then 
+            (:in a regex query, {}[] are OK:)
+            if (starts-with($query, '/') and ends-with($query, '/'))
+            then $query
+            (:otherwise remove them:)
+            else translate($query, '{}[]', ' ')
+        else $query
+};
+
+(: This functions provides crude way to avoid the most common errors with paired expressions and apostrophes. :)
+(: TODO: check order of pairs:)
+declare %private function app:sanitize-query($query-string as xs:string) as xs:string {
+    let $query-string := replace($query-string, "'", "''") (:escape apostrophes:)
+    (:TODO: notify user if query has been modified.:)
+    (:Remove colons – Lucene fields are not supported.:)
+    let $query-string := translate($query-string, ":", " ")
+    let $query-string := 
+       if (functx:number-of-matches($query-string, '"') mod 2) 
+       then $query-string
+       else replace($query-string, '"', ' ') (:if there is an uneven number of quotation marks, delete all quotation marks.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '\(') + functx:number-of-matches($query-string, '\)')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '()', ' ') (:if there is an uneven number of parentheses, delete all parentheses.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '\[') + functx:number-of-matches($query-string, '\]')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '[]', ' ') (:if there is an uneven number of brackets, delete all brackets.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '{') + functx:number-of-matches($query-string, '}')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '{}', ' ') (:if there is an uneven number of braces, delete all braces.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '<') + functx:number-of-matches($query-string, '>')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '<>', ' ') (:if there is an uneven number of angle brackets, delete all angle brackets.:)
+    return $query-string
+};
 (:~
     Output the actual search result as a div, using the kwic module to summarize full text matches.
 :)
