@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <div data-template="templates:surround" data-template-with="templates/page.html" data-template-at="content">
     <div data-template="templates:include" data-template-path="templates/menu.html"/>
     <div class="row">
@@ -17,35 +16,34 @@
                             </span>
                             <input type="hidden" name="field" value="text"/>
                         </div>
-                    </div><!--div id="mode-selection" class="form-group" data-toggle="tooltip" data-placement="left" title="Use Which Search Mode?">
-                        <div class="col-md-12 col-xs-12">
-                            <select name="lucene-query-mode" class="form-control" data-template="templates:form-control">
-                                <option value="any">Any Search Term</option>
-                                <option value="all">All Search Terms Together</option>
-                                <option value="phrase">Phrase Search</option>
-                                <option value="near-ordered">Proximity Search (Ordered)</option>
-                                <option value="near-unordered">Proximity Search (Unordered)</option>
-                                <option value="fuzzy">Fuzzy Search</option>
-                                <option value="regex">Regex Search</option>
-                            </select>
-                        </div>
-                    </div-->
+                    </div>
                     <div class="form-group" data-toggle="tooltip" data-placement="left" title="Search Which Document Part?">
                         <div class="col-md-12 col-xs-12">
                             <select name="tei-target" class="form-control" data-template="templates:form-control">
-                                <option value="tei-text" selected="selected">Search
-                                    Sections</option>
-                                <option value="tei-head">Search Headings</option>
+                                <option value="tei-text" selected="selected">Search TEI Text</option>
+                                <option value="tei-head">TEI Header</option>
                             </select>
                         </div>
-                    </div><!--div class="form-group" data-toggle="tooltip" data-placement="left" title="Search Narrowly Or Broadly?">
+                    </div>
+                    <div class="form-group" data-toggle="tooltip" data-placement="left" title="Search Narrowly Or Broadly?">
                         <div class="col-md-12 col-xs-12">
                             <select name="query-scope" class="form-control" data-template="templates:form-control">
-                                <option value="narrow" selected="selected">Perform Narrow Search</option>
-                                <option value="broad">Perform Broad Search</option>
+                                <option value="seg">Search Lines</option>
+                                <option value="p" selected="selected">Search Paragraphs</option>
+                                <option value="div">Search Divisions</option>
                             </select>
                         </div>
-                    </div-->
+                    </div>
+                    <div id="bool-selection" class="form-group" data-toggle="tooltip" data-placement="left" title="Perform New Search or Continue Last Search?">
+                        <div class="col-md-12 col-xs-12">
+                            <select name="bool" class="form-control" data-template="templates:form-control">
+                                <option value="new" selected="selected">Perform New Search</option>
+                                <option value="and">AND Last Search</option>
+                                <option value="or">OR Last Search</option>
+                                <option value="not">NOT Last Search</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-9 col-md-pull-3">

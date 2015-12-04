@@ -291,3 +291,10 @@ body {
 #results .reference .number {
   margin-right: 1em;
 }
+.navbar-header img .tls-icon {
+  width: 200px;
+  display: none;
+}
+mark {
+  background-color: #C0DBF2;
+}

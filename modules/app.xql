@@ -9,6 +9,30 @@ import module namespace pages="http://existsolutions.com/apps/TLS/texts/pages" a
 
 declare namespace expath="http://expath.org/ns/pkg";
 declare namespace tei="http://www.tei-c.org/ns/1.0";
+declare namespace functx="http://www.functx.com";
+
+(:modified by applying functx:escape-for-regex() :)
+declare %private function functx:number-of-matches 
+  ( $arg as xs:string? ,
+    $pattern as xs:string )  as xs:integer {
+       
+   count(tokenize(functx:escape-for-regex(functx:escape-for-regex($arg)),functx:escape-for-regex($pattern))) - 1
+ } ;
+
+declare %private function functx:contains-any-of
+  ( $arg as xs:string? ,
+    $searchStrings as xs:string* )  as xs:boolean {
+
+   some $searchString in $searchStrings
+   satisfies contains($arg,$searchString)
+ } ;
+
+declare %private function functx:escape-for-regex
+  ( $arg as xs:string? )  as xs:string {
+
+   replace($arg,
+           '(\.|\[|\]|\\|\||\-|\^|\$|\?|\*|\+|\{|\}|\(|\))','\\$1')
+ } ;
 
 (:~
  : List documents in data collection
@@ -128,26 +152,70 @@ function app:hit-count($node as node()*, $model as map(*), $key as xs:string) {
     count($model($key))
 };
 
+(:template function in search.html:)
+declare function app:query-report($node as node()*, $model as map(*)) {
+    let $hits := $model("hits")
+    let $hit-count := count($hits)
+    let $match-count := count(util:expand($hits)//exist:match)
+    let $ids := $model("apps.simple.target-texts")
+    let $ids := request:get-parameter('target-texts', 'all')
+    return
+        <span xmlns="http://www.w3.org/1999/xhtml" id="query-report"> You searched for <strong>{$model("query")}</strong> in 
+        <strong>{if ($ids = 'all' or empty($ids)) then 'all works' else app:ids-to-titles($ids)}</strong> 
+        and found <strong>{$hit-count}</strong>{if ($hit-count eq 1) then ' hit' else ' hits'} with <strong>{$match-count}</strong> {if ($match-count eq 1) then ' match.' else ' matches.'}
+        </span>
+};
+
+declare function app:ids-to-titles($ids as xs:string+) {
+    let $titles :=
+        for $id in $ids
+        return
+            collection($config:data-root)//tei:TEI[@xml:id eq $id]/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:title[1]/text()
+    let $count := count($titles)
+    return
+        app:serialize-list($titles, $count)
+};
+
+declare function app:serialize-list($sequence as item()+, $sequence-count as xs:integer) as xs:string {       
+    if ($sequence-count eq 1)
+        then $sequence
+        else
+            if ($sequence-count eq 2)
+            then concat(
+                subsequence($sequence, 1, $sequence-count - 1),
+                (:Places " and " before last item.:)
+                ' and ',
+                $sequence[$sequence-count]
+                )
+            else concat(
+                (:Places ", " after all items that do not come last.:)
+                string-join(subsequence($sequence, 1, $sequence-count - 1)
+                , ', ')
+                ,
+                (:Places ", and " before item that comes last.:)
+                ', and ',
+                $sequence[$sequence-count]
+                )
+};
+
+(:template function in index.html:)
 declare 
     %templates:wrap
 function app:checkbox($node as node(), $model as map(*), $target-texts as xs:string*) {
-    let $id := $model("work")/@xml:id/string()
-    return (
-        attribute { "value" } {
-            $id
-        },
-        if ($id = $target-texts) then
-            attribute checked { "checked" }
-        else
-            ()
-    )
+    attribute { "value" } {
+        $model("work")/@xml:id/string()
+    },
+    if ($model("work")/@xml:id/string() = $target-texts) then
+        attribute checked { "checked" }
+    else
+        ()
 };
+
 
 (:~
  : 
  :)
 declare function app:work-title($node as node(), $model as map(*), $type as xs:string?) {
-    let $log := util:log("DEBUG", ("##$config:app-root): ", $config:app-root))
     let $suffix := if ($type) then "." || $type else ()
     let $work := $model("work")/ancestor-or-self::tei:TEI
     let $id := util:document-name($work)
@@ -164,7 +232,7 @@ declare %private function app:work-title($work as element(tei:TEI)?) {
 
 declare function app:work-author($node as node(), $model as map(*)) {
     let $work := $model("work")/ancestor-or-self::tei:TEI
-    let $work-authors := $work//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author
+    let $work-authors := $work/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author
     return 
         string-join($work-authors, "; ")
 };
@@ -247,30 +315,80 @@ declare function app:fix-links($nodes as node()*) {
 :)
 declare 
     %templates:default("tei-target", "tei-text")
-    %templates:default("query-scope", "narrow")
+    %templates:default("query-scope", "p")
     %templates:default("work-authors", "all")
     %templates:default("target-texts", "all")
-function app:query($node as node()*, $model as map(*), $query as xs:string?, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $target-texts as xs:string+) as map(*) {
-        (:If there is no query string, fill up the map with existing values:)
+    %templates:default("bool", "new")
+function app:query($node as node()*, $model as map(*), $query as xs:string?, $tei-target as xs:string+, $query-scope as xs:string, $work-authors as xs:string+, $target-texts as xs:string+, $bool as xs:string?) as map(*) {
+        let $query := 
+            if ($query) 
+            then app:convert-query-to-phrase-query(app:sanitize-query($query)) 
+            else ()
+        return
+        (:If there is no query string, fill up the map with any existing values (but do not sanitize it once again):)
         if (empty($query))
         then
             map {
-                "hits" := session:get-attribute("apps.simple"),
+                "hits" := session:get-attribute("apps.simple.hits"),
                 "hitCount" := session:get-attribute("apps.simple.hitCount"),
                 "query" := session:get-attribute("apps.simple.query"),
-                "scope" := $query-scope (:NB: what about the other arguments?:)
+                "scope" := session:get-attribute("apps.simple.scope"),
+                "target-texts" := session:get-attribute("apps.simple.target-texts"),
+                "bool" := session:get-attribute("apps.simple.bool")
             }
         else
             (:Otherwise, perform the query.:)
             (: Here the actual query commences. This is split into two parts, the first for a Lucene query and the second for an ngram query. :)
             let $hits :=
-                    (:If the $query-scope is narrow, query the elements immediately below the lowest div in tei:text and the four major element below tei:teiHeader.:)
+                (:If the $query-scope is narrow, query the elements immediately below the lowest div in tei:text and the four major element below tei:teiHeader.:)
+                if ($query-scope eq 'seg')
+                then
+                    for $hit in 
+                        (:If both tei-text and tei-header is queried.:)
+                        if (count($tei-target) eq 2)
+                        then
+                            collection($config:data-root)//tei:seg[ft:query(., $query)] |
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                        else
+                            if ($tei-target = 'tei-text')
+                            then
+                                collection($config:data-root)//tei:seg[ft:query(., $query)]
+                            else 
+                                if ($tei-target = 'tei-head')
+                                then 
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+                    order by ft:score($hit) descending
+                    return $hit
+                else 
+                if ($query-scope eq 'p')
+                then
+                    for $hit in 
+                        (:If both tei-text and tei-header is queried.:)
+                        if (count($tei-target) eq 2)
+                        then
+                            collection($config:data-root)//tei:p[ft:query(., $query)] |
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                        else
+                            if ($tei-target = 'tei-text')
+                            then
+                                collection($config:data-root)//tei:p[ft:query(., $query)]
+                            else 
+                                if ($tei-target = 'tei-head')
+                                then 
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+                    order by ft:score($hit) descending
+                    return $hit
+                else 
+                if ($query-scope eq 'div')
+                then
                     for $hit in 
                         (:If both tei-text and tei-header is queried.:)
                         if (count($tei-target) eq 2)
                         then
                             collection($config:data-root)//tei:div[ft:query(., $query)] |
-                            collection($config:data-root)//tei:head[ft:query(., $query)]
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
                         else
                             if ($tei-target = 'tei-text')
                             then
@@ -278,18 +396,46 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                             else 
                                 if ($tei-target = 'tei-head')
                                 then 
-                                    collection($config:data-root)//tei:head[ft:query(., $query)]
-                                else ()    
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+
                     order by ft:score($hit) descending
                     return $hit
+                else ()
+                let $query :=
+                            if ($bool eq 'new')
+                            then $query
+                            else
+                                if ($bool eq 'and')
+                                then session:get-attribute("apps.simple.query") || ' AND ' || $query
+                                else
+                                    if ($bool eq 'or')
+                                    then session:get-attribute("apps.simple.query") || ' OR ' || $query
+                                    else
+                                        if ($bool eq 'not')
+                                        then session:get-attribute("apps.simple.query") || ' NOT ' || $query
+                                        else $query
+            let $hits :=
+                if ($bool eq 'or')
+                then session:get-attribute("apps.simple.hits") union $hits
+                else 
+                    if ($bool eq 'and')
+                    then session:get-attribute("apps.simple.hits") intersect $hits
+                    else
+                        if ($bool eq 'not')
+                        then session:get-attribute("apps.simple.hits") except $hits
+                        else $hits
+            (:Store the result in the session.:)
             let $hitCount := count($hits)
             let $hits := if ($hitCount > 1000) then subsequence($hits, 1, 1000) else $hits
             (:Store the result in the session.:)
             let $store := (
-                session:set-attribute("apps.simple", $hits),
+                session:set-attribute("apps.simple.hits", $hits),
                 session:set-attribute("apps.simple.hitCount", $hitCount),
                 session:set-attribute("apps.simple.query", $query),
-                session:set-attribute("apps.simple.scope", $query-scope)
+                session:set-attribute("apps.simple.scope", $query-scope),
+                session:set-attribute("apps.simple.target-texts", $target-texts),
+                session:set-attribute("apps.simple.bool", $bool)
                 )
             return
                 (: The hits are not returned directly, but processed by the nested templates :)
@@ -300,6 +446,69 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                 }
 };
 
+
+(:convert text queries into phrase queries by default:)
+declare function app:convert-query-to-phrase-query($query as xs:string) as xs:string {
+    let $query-parts := tokenize($query, '\s+')
+    return
+        string-join(
+        for $query-part in $query-parts
+        return 
+            if (
+                (
+                    $query-part = ('AND', 'OR', 'NOT') or 
+                    (:if the first character, including any + or - or ' or ", is not a Chinese character, don't alter the query, assuming that the rest will be the same:)
+                    (:if users employ +, -, ' or ", they must know what they are doing:)
+                    string-to-codepoints(substring($query-part, 1)) < 13312
+                )
+                (:if the length of the query part, including any + or - or ' or ", is greater than 1, don't alter the query:)
+                and string-length($query-part) > 1
+                )
+            then $query-part
+            else '"' || app:sanitize-query-part($query-part) || '"'
+        , ' ')
+};
+
+declare function app:sanitize-query-part($query as xs:string?) as xs:string? {
+    if (functx:contains-any-of($query, ('{', '}', '[', ']')))
+        then 
+            (:in a regex query, {}[] are OK:)
+            if (starts-with($query, '/') and ends-with($query, '/'))
+            then $query
+            (:otherwise remove them:)
+            else translate($query, '{}[]', ' ')
+        else $query
+};
+
+(: This functions provides crude way to avoid the most common errors with paired expressions and apostrophes. :)
+(: TODO: check order of pairs:)
+declare %private function app:sanitize-query($query-string as xs:string) as xs:string {
+    let $query-string := replace($query-string, "'", "''") (:escape apostrophes:)
+    (:TODO: notify user if query has been modified.:)
+    (:Remove colons – Lucene fields are not supported.:)
+    let $query-string := translate($query-string, ":", " ")
+    let $query-string := 
+       if (functx:number-of-matches($query-string, '"') mod 2) 
+       then $query-string
+       else replace($query-string, '"', ' ') (:if there is an uneven number of quotation marks, delete all quotation marks.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '\(') + functx:number-of-matches($query-string, '\)')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '()', ' ') (:if there is an uneven number of parentheses, delete all parentheses.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '\[') + functx:number-of-matches($query-string, '\]')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '[]', ' ') (:if there is an uneven number of brackets, delete all brackets.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '{') + functx:number-of-matches($query-string, '}')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '{}', ' ') (:if there is an uneven number of braces, delete all braces.:)
+    let $query-string := 
+       if ((functx:number-of-matches($query-string, '<') + functx:number-of-matches($query-string, '>')) mod 2 eq 0) 
+       then $query-string
+       else translate($query-string, '<>', ' ') (:if there is an uneven number of angle brackets, delete all angle brackets.:)
+    return $query-string
+};
 (:~
     Output the actual search result as a div, using the kwic module to summarize full text matches.
 :)
