@@ -315,7 +315,7 @@ declare function app:fix-links($nodes as node()*) {
 :)
 declare 
     %templates:default("tei-target", "tei-text")
-    %templates:default("query-scope", "narrow")
+    %templates:default("query-scope", "p")
     %templates:default("work-authors", "all")
     %templates:default("target-texts", "all")
     %templates:default("bool", "new")
@@ -340,13 +340,55 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
             (:Otherwise, perform the query.:)
             (: Here the actual query commences. This is split into two parts, the first for a Lucene query and the second for an ngram query. :)
             let $hits :=
-                    (:If the $query-scope is narrow, query the elements immediately below the lowest div in tei:text and the four major element below tei:teiHeader.:)
+                (:If the $query-scope is narrow, query the elements immediately below the lowest div in tei:text and the four major element below tei:teiHeader.:)
+                if ($query-scope eq 'seg')
+                then
+                    for $hit in 
+                        (:If both tei-text and tei-header is queried.:)
+                        if (count($tei-target) eq 2)
+                        then
+                            collection($config:data-root)//tei:seg[ft:query(., $query)] |
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                        else
+                            if ($tei-target = 'tei-text')
+                            then
+                                collection($config:data-root)//tei:seg[ft:query(., $query)]
+                            else 
+                                if ($tei-target = 'tei-head')
+                                then 
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+                    order by ft:score($hit) descending
+                    return $hit
+                else 
+                if ($query-scope eq 'p')
+                then
+                    for $hit in 
+                        (:If both tei-text and tei-header is queried.:)
+                        if (count($tei-target) eq 2)
+                        then
+                            collection($config:data-root)//tei:p[ft:query(., $query)] |
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                        else
+                            if ($tei-target = 'tei-text')
+                            then
+                                collection($config:data-root)//tei:p[ft:query(., $query)]
+                            else 
+                                if ($tei-target = 'tei-head')
+                                then 
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+                    order by ft:score($hit) descending
+                    return $hit
+                else 
+                if ($query-scope eq 'div')
+                then
                     for $hit in 
                         (:If both tei-text and tei-header is queried.:)
                         if (count($tei-target) eq 2)
                         then
                             collection($config:data-root)//tei:div[ft:query(., $query)] |
-                            collection($config:data-root)//tei:head[ft:query(., $query)]
+                            collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
                         else
                             if ($tei-target = 'tei-text')
                             then
@@ -354,11 +396,13 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                             else 
                                 if ($tei-target = 'tei-head')
                                 then 
-                                    collection($config:data-root)//tei:head[ft:query(., $query)]
-                                else ()    
+                                    collection($config:data-root)//tei:teiHeader[ft:query(., $query)]
+                                else ()
+
                     order by ft:score($hit) descending
                     return $hit
-                        let $query :=
+                else ()
+                let $query :=
                             if ($bool eq 'new')
                             then $query
                             else
