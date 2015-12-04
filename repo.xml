@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <meta xmlns="http://exist-db.org/xquery/repo">
-    <description>App for Viewing and Searching TLS Documents</description>
+    <description>TLS Texts</description>
     <website/>
     <status/>
     <license>GNU-LGPL</license>
