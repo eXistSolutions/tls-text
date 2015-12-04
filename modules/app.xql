@@ -156,13 +156,17 @@ function app:hit-count($node as node()*, $model as map(*), $key as xs:string) {
 declare function app:query-report($node as node()*, $model as map(*)) {
     let $hits := $model("hits")
     let $hit-count := count($hits)
+    let $log := util:log("DEBUG", ("##$hit-count): ", $hit-count))
     let $match-count := count(util:expand($hits)//exist:match)
     let $ids := $model("apps.simple.target-texts")
     let $ids := request:get-parameter('target-texts', 'all')
+    let $hit-count-total := session:get-attribute("apps.simple.hitCount")
+    let $log := util:log("DEBUG", ("##$hit-count-total): ", $hit-count-total))
     return
-        <div xmlns="http://www.w3.org/1999/xhtml" id="query-report"> You searched for <strong>{$model("query")}</strong> in 
+        <div xmlns="http://www.w3.org/1999/xhtml" id="query-report"> You have searched for <strong>{$model("query")}</strong> in 
         <strong>{if ($ids = 'all' or empty($ids)) then 'all works' else app:ids-to-titles($ids)}</strong> 
         and found <strong>{$hit-count}</strong>{if ($hit-count eq 1) then ' hit' else ' hits'} with <strong>{$match-count}</strong> {if ($match-count eq 1) then ' match.' else ' matches.'}
+        {if ($hit-count-total > $config:hit-limit) then <warning>Your search resulted in {$hit-count-total} hits. Only the first {$config:hit-limit} hits are returned.</warning> else ()}
         </div>
 };
 
@@ -402,19 +406,19 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                     order by ft:score($hit) descending
                     return $hit
                 else ()
-                let $query :=
-                            if ($bool eq 'new')
-                            then $query
+            let $query :=
+                        if ($bool eq 'new')
+                        then $query
+                        else
+                            if ($bool eq 'and')
+                            then session:get-attribute("apps.simple.query") || ' AND ' || $query
                             else
-                                if ($bool eq 'and')
-                                then session:get-attribute("apps.simple.query") || ' AND ' || $query
+                                if ($bool eq 'or')
+                                then session:get-attribute("apps.simple.query") || ' OR ' || $query
                                 else
-                                    if ($bool eq 'or')
-                                    then session:get-attribute("apps.simple.query") || ' OR ' || $query
-                                    else
-                                        if ($bool eq 'not')
-                                        then session:get-attribute("apps.simple.query") || ' NOT ' || $query
-                                        else $query
+                                    if ($bool eq 'not')
+                                    then session:get-attribute("apps.simple.query") || ' NOT ' || $query
+                                    else $query
             let $hits :=
                 if ($bool eq 'or')
                 then session:get-attribute("apps.simple.hits") union $hits
@@ -540,7 +544,6 @@ function app:show-hits($node as node()*, $model as map(*), $start as xs:integer,
     (:pad hit with surrounding siblings:)
     let $hit-padded := $hit
 (:    let $hit-padded := <hit>{($hit/preceding-sibling::*[1], $hit, $hit/following-sibling::*[1])}</hit>:)
-        
     let $loc := 
         <tr class="reference">
             <td colspan="3">

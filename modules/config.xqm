@@ -52,6 +52,8 @@ declare variable $config:app-root :=
 declare variable $config:remote-root:= functx:substring-before-last($config:app-root,"/") || "/" || "tls-data";
 declare variable $config:data-root := $config:remote-root || "/core/texts/chant";
 
+declare variable $config:hit-limit := 1000;
+
 declare variable $config:odd := "tls.odd";
 
 declare variable $config:odd-root := $config:app-root || "/resources/odd";
