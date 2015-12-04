@@ -46,26 +46,7 @@ declare function local:fop($id as xs:string, $fo as element()) {
         <renderers>
             <renderer mime="application/pdf">
                 <fonts>
-                    <font kerning="yes"
-                        embed-url="Junicode.ttf"
-                        encoding-mode="single-byte">
-                        <font-triplet name="Junicode" style="normal" weight="normal"/>
-                    </font>
-                    <font kerning="yes"
-                        embed-url="Junicode-Bold.ttf"
-                        encoding-mode="single-byte">
-                        <font-triplet name="Junicode" style="normal" weight="700"/>
-                    </font>
-                    <font kerning="yes"
-                        embed-url="Junicode-Italic.ttf"
-                        encoding-mode="single-byte">
-                        <font-triplet name="Junicode" style="italic" weight="normal"/>
-                    </font>
-                    <font kerning="yes"
-                        embed-url="Junicode-BoldItalic.ttf"
-                        encoding-mode="single-byte">
-                        <font-triplet name="Junicode" style="italic" weight="700"/>
-                    </font>
+                    <auto-detect/>
                 </fonts>
             </renderer>
         </renderers>
