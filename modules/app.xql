@@ -128,26 +128,70 @@ function app:hit-count($node as node()*, $model as map(*), $key as xs:string) {
     count($model($key))
 };
 
+(:template function in search.html:)
+declare function app:query-report($node as node()*, $model as map(*)) {
+    let $hits := $model("hits")
+    let $hit-count := count($hits)
+    let $match-count := count(util:expand($hits)//exist:match)
+    let $ids := $model("apps.simple.target-texts")
+    let $ids := request:get-parameter('target-texts', 'all')
+    return
+        <span xmlns="http://www.w3.org/1999/xhtml" id="query-report"> You searched for <strong>{$model("query")}</strong> in 
+        <strong>{if ($ids = 'all' or empty($ids)) then 'all works' else app:ids-to-titles($ids)}</strong> 
+        and found <strong>{$hit-count}</strong>{if ($hit-count eq 1) then ' hit' else ' hits'} with <strong>{$match-count}</strong> {if ($match-count eq 1) then ' match.' else ' matches.'}
+        </span>
+};
+
+declare function app:ids-to-titles($ids as xs:string+) {
+    let $titles :=
+        for $id in $ids
+        return
+            collection($config:data-root)//tei:TEI[@xml:id eq $id]/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:title[1]/text()
+    let $count := count($titles)
+    return
+        app:serialize-list($titles, $count)
+};
+
+declare function app:serialize-list($sequence as item()+, $sequence-count as xs:integer) as xs:string {       
+    if ($sequence-count eq 1)
+        then $sequence
+        else
+            if ($sequence-count eq 2)
+            then concat(
+                subsequence($sequence, 1, $sequence-count - 1),
+                (:Places " and " before last item.:)
+                ' and ',
+                $sequence[$sequence-count]
+                )
+            else concat(
+                (:Places ", " after all items that do not come last.:)
+                string-join(subsequence($sequence, 1, $sequence-count - 1)
+                , ', ')
+                ,
+                (:Places ", and " before item that comes last.:)
+                ', and ',
+                $sequence[$sequence-count]
+                )
+};
+
+(:template function in index.html:)
 declare 
     %templates:wrap
 function app:checkbox($node as node(), $model as map(*), $target-texts as xs:string*) {
-    let $id := $model("work")/@xml:id/string()
-    return (
-        attribute { "value" } {
-            $id
-        },
-        if ($id = $target-texts) then
-            attribute checked { "checked" }
-        else
-            ()
-    )
+    attribute { "value" } {
+        $model("work")/@xml:id/string()
+    },
+    if ($model("work")/@xml:id/string() = $target-texts) then
+        attribute checked { "checked" }
+    else
+        ()
 };
+
 
 (:~
  : 
  :)
 declare function app:work-title($node as node(), $model as map(*), $type as xs:string?) {
-    let $log := util:log("DEBUG", ("##$config:app-root): ", $config:app-root))
     let $suffix := if ($type) then "." || $type else ()
     let $work := $model("work")/ancestor-or-self::tei:TEI
     let $id := util:document-name($work)
@@ -164,7 +208,7 @@ declare %private function app:work-title($work as element(tei:TEI)?) {
 
 declare function app:work-author($node as node(), $model as map(*)) {
     let $work := $model("work")/ancestor-or-self::tei:TEI
-    let $work-authors := $work//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author
+    let $work-authors := $work/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author
     return 
         string-join($work-authors, "; ")
 };
@@ -258,7 +302,8 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                 "hits" := session:get-attribute("apps.simple"),
                 "hitCount" := session:get-attribute("apps.simple.hitCount"),
                 "query" := session:get-attribute("apps.simple.query"),
-                "scope" := $query-scope (:NB: what about the other arguments?:)
+                "scope" := $query-scope,
+                "target-texts" := session:get-attribute("apps.simple.target-texts")
             }
         else
             (:Otherwise, perform the query.:)
@@ -289,7 +334,8 @@ function app:query($node as node()*, $model as map(*), $query as xs:string?, $te
                 session:set-attribute("apps.simple", $hits),
                 session:set-attribute("apps.simple.hitCount", $hitCount),
                 session:set-attribute("apps.simple.query", $query),
-                session:set-attribute("apps.simple.scope", $query-scope)
+                session:set-attribute("apps.simple.scope", $query-scope),
+                session:set-attribute("apps.simple.target-texts", $target-texts)
                 )
             return
                 (: The hits are not returned directly, but processed by the nested templates :)
