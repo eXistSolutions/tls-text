@@ -60,15 +60,17 @@ declare variable $pages:EXIDE :=
 declare
     %templates:wrap
     %templates:default("view", "div")
-function pages:load($node as node(), $model as map(*), $doc as xs:string, $root as xs:string?, $view as xs:string) {
+function pages:load($node as node(), $model as map(*), $doc as xs:string, $root as xs:string?, $id as xs:string?, $view as xs:string) {
     map {
-        "data": pages:load-xml($view, $root, $doc)
+        "data": pages:load-xml($view, $root, $doc, $id)
     }
 };
 
-declare function pages:load-xml($view as xs:string, $root as xs:string?, $doc as xs:string) {
+declare function pages:load-xml($view as xs:string, $root as xs:string?, $doc as xs:string, $id as xs:string?) {
 	if ($view = "div") then
-	    if (matches($doc, "_[\d\.]+\.xml$")) then
+	    if (exists($id)) then
+	        doc($config:data-root || "/" || $doc)/id($id)
+	    else if (matches($doc, "_[\d\.]+\.xml$")) then
             let $analyzed := analyze-string($doc, "^(.*)_([\d\.]+)\.xml$")
             let $docName := $analyzed//fn:group[@nr = 1]/text()
             let $doc := doc($config:data-root || "/" || $docName)
