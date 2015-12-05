@@ -14,7 +14,7 @@ body {
 .browse td:nth-child(2),
 .browse td:nth-child(3),
 .browse td:nth-child(4) {
-  font-family: "Junicode", Georgia, "Times New Roman", serif;
+  font-family: CHANT, SimSun, MingLiU, Georgia, "Times New Roman", serif;
 }
 .browse td:nth-child(5) {
   width: 180px;
@@ -47,7 +47,7 @@ body {
   margin-top: 50px;
 }
 #content-inner {
-  font-family: Junicode, Georgia, Times, serif;
+  font-family: CHANT, SimSun, MingLiU, Georgia, "Times New Roman", serif;
   font-size: 16px;
 }
 .content h1 {
@@ -68,7 +68,7 @@ body {
 .content h4,
 .content h5,
 .content h6 {
-  font-family: Junicode, Georgia, Times, serif;
+  font-family: CHANT, SimSun, MingLiU, Georgia, "Times New Roman", serif;
   line-height: 1.2;
 }
 .content > * > section {
@@ -214,7 +214,7 @@ body {
 }
 .navigation-top h5 {
   text-align: center;
-  font-family: "Junicode", Georgia, "Times New Roman", serif;
+  font-family: CHANT, SimSun, MingLiU, Georgia, "Times New Roman", serif;
   font-size: 16px;
   padding: 10px 10px 10px 0;
   margin-left: 60px;
