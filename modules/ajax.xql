@@ -61,7 +61,7 @@ let $xml :=
             else
                 $div
     ) else
-        pages:load-xml("div", $root, $doc)
+        pages:load-xml("div", $root, $doc, ())
 return
     if ($xml) then
         let $parent := $xml/ancestor::tei:div[not(*[1] instance of element(tei:div))][1]
