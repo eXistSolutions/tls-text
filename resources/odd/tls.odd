@@ -62,9 +62,10 @@
                     </model>
                 </elementSpec>
                 <elementSpec mode="add" ident="lem">
-                    <model behaviour="inline">
+                    <model output="web" behaviour="inline">
                         <outputRendition>color: #FF1111; cursor: pointer;</outputRendition>
                     </model>
+                    <model output="print" behaviour="inline"/>
                 </elementSpec>
                 <moduleRef key="tei"/>
                 <moduleRef key="header"/>

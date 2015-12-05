@@ -1852,7 +1852,7 @@ relatedItem element must be empty</sch:report>
                     <constraintSpec mode="add" ident="noEmptyBibl" scheme="isoschematron">
                         <constraint>
                             <assert xmlns="http://purl.oclc.org/dsdl/schematron" test="child::* or child::text()[normalize-space()]" role="ERROR">
-                Element "<name/>" may not be empty.
+                Element "<sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>" may not be empty.
             </assert>
                         </constraint>
                     </constraintSpec>
@@ -1895,14 +1895,14 @@ relatedItem element must be empty</sch:report>
                     <constraintSpec ident="choiceSize" scheme="isoschematron" mode="add">
                         <constraint>
                             <assert xmlns="http://purl.oclc.org/dsdl/schematron" test="count(*) &gt; 1" role="ERROR">
-                    Element "<name/>" must have at least two child
+                    Element "<sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>" must have at least two child
 		    elements.</assert>
                         </constraint>
                     </constraintSpec>
                     <constraintSpec ident="choiceContent" scheme="isoschematron" mode="add">
                         <constraint>
                             <assert xmlns="http://purl.oclc.org/dsdl/schematron" test="(tei:corr or tei:sic or tei:expan or     tei:abbr or tei:reg or tei:orig) and ((tei:corr and tei:sic) or (tei:expan     and tei:abbr) or (tei:reg and tei:orig))" role="ERROR">
-                    Element "<name/>" must have corresponding corr/sic, expand/abbr, reg/orig </assert>
+                    Element "<sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>" must have corresponding corr/sic, expand/abbr, reg/orig </assert>
                         </constraint>
                     </constraintSpec>
                     <attList/>
@@ -2741,7 +2741,7 @@ relatedItem element must be empty</sch:report>
                     <constraintSpec scheme="isoschematron" ident="refAtts">
                         <constraint>
                             <report xmlns="http://purl.oclc.org/dsdl/schematron" test="@target and @cRef">Only one of the
-	attributes @target' and @cRef' may be supplied on <name/>
+	attributes @target' and @cRef' may be supplied on <sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>
                             </report>
                         </constraint>
                     </constraintSpec>
@@ -3315,7 +3315,7 @@ relatedItem element must be empty</sch:report>
                     <constraintSpec ident="quotationContents" scheme="isoschematron">
                         <constraint>
                             <report xmlns="http://purl.oclc.org/dsdl/schematron" test="not(@marks) and not (tei:p)">
-On <name/>, either the @marks attribute should be used, or a paragraph of description provided</report>
+On <sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>, either the @marks attribute should be used, or a paragraph of description provided</report>
                         </constraint>
                     </constraintSpec>
                     <attList>
@@ -4844,7 +4844,7 @@ On <name/>, either the @marks attribute should be used, or a paragraph of descri
                     <constraintSpec ident="spanTo" scheme="isoschematron">
                         <constraint>
                             <assert xmlns="http://purl.oclc.org/dsdl/schematron" test="@spanTo">
-The @spanTo attribute of <name/> is required.</assert>
+The @spanTo attribute of <sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/> is required.</assert>
                         </constraint>
                     </constraintSpec>
                     <constraintSpec ident="spanTo_fr" scheme="isoschematron" xml:lang="fr">
@@ -5304,7 +5304,7 @@ The @spanTo attribute of <name/> is required.</assert>
                     <constraintSpec ident="substContents1" scheme="isoschematron">
                         <constraint>
                             <assert xmlns="http://purl.oclc.org/dsdl/schematron" test="child::tei:add and child::tei:del">
-                                <name/> must have at least one child add and at least one child del</assert>
+                                <sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/> must have at least one child add and at least one child del</assert>
                         </constraint>
                     </constraintSpec>
                     <attList/>
@@ -6636,7 +6636,7 @@ The @spanTo attribute of <name/> is required.</assert>
                     <_0:constraintSpec xmlns:_0="http://www.tei-c.org/ns/1.0" ident="headeronlyelement" scheme="isoschematron">
                         <_0:constraint>
                             <rule xmlns="http://purl.oclc.org/dsdl/schematron" context="att|&#xA;biblFull|&#xA;biblScope|&#xA;biblStruct|&#xA;change|&#xA;charDecl|&#xA;charProp|&#xA;editor|&#xA;editorialDecl|&#xA;email|&#xA;encodingDesc|&#xA;extent|&#xA;fileDesc|&#xA;gi|&#xA;glyph|&#xA;glyphName|&#xA;idno|&#xA;imprint|&#xA;keywords|&#xA;licence|&#xA;listChange|&#xA;listPerson|&#xA;localName|&#xA;monogr|&#xA;msDesc|&#xA;msIdentifier|&#xA;physDesc|&#xA;profileDesc|&#xA;publicationStmt|&#xA;relatedItem|&#xA;repository|&#xA;resp|&#xA;respStmt|&#xA;sourceDesc|&#xA;teiHeader|&#xA;textClass|&#xA;textDesc|&#xA;titleStmt|&#xA;typeDesc|&#xA;value">
-                                <report test="ancestor::tei:text">Error:  The element <name/>
+                                <report test="ancestor::tei:text">Error:  The element <sch:name xmlns:sch="http://purl.oclc.org/dsdl/schematron"/>
 is not permitted outside the header</report>
                             </rule>
                         </_0:constraint>
@@ -6936,9 +6936,10 @@ border-bottom: solid 1pt blue;
                 </elementSpec>
                 <elementSpec rend="add" module="derived-module-tls" mode="add" ident="lem">
                     <attList/>
-                    <model behaviour="inline">
+                    <model output="web" behaviour="inline">
                         <outputRendition>color: #FF1111; cursor: pointer;</outputRendition>
                     </model>
+                    <model output="print" behaviour="inline"/>
                 </elementSpec>
                 <moduleSpec n="ST" xml:id="DSTTEI2" ident="tei" type="core"/>
                 <moduleSpec n="CO" xml:id="DCO" ident="core"/>

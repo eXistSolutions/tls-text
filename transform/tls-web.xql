@@ -481,7 +481,7 @@ declare function model:apply($config as map(*), $input as node()*) {
                 case element(app) return
                     html:alternate($config, ., "app", ., lem, (rdg,note))
                 case element(lem) return
-                    html:inline($config, ., "lem", .)
+                    html:inline($config, ., "lem1", .)
                 case element(exist:match) return
                     html:match($config, ., .)
                 case text() | xs:anyAtomicType return

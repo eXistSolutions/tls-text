@@ -4,9 +4,16 @@
 .body2 {
     font-family: CHANT, SimSun, MingLiU, serif;
 }
+@page:head {
+    font-family: CHANT, SimSun, MingLiU, serif;
+}
 .floatingText {
     padding: 6pt;
 }
 .p {
     text-align: justify;
+}
+.note-body-number {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 75%;
 }

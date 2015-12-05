@@ -15,7 +15,7 @@ import module namespace css="http://www.tei-c.org/tei-simple/xquery/css" at "xml
 
 import module namespace fo="http://www.tei-c.org/tei-simple/xquery/functions/fo" at "xmldb:exist://embedded-eXist-server/db/apps/tei-simple/content/fo-functions.xql";
 
-import module namespace ext-fo="http://www.tei-c.org/tei-simple/xquery/ext-fo" at "xmldb:exist://embedded-eXist-server/db/apps/tei-simple/content/../modules/ext-fo.xql";
+import module namespace ext-fo="http://existsolutions.com/apps/TLS/texts/ext-fo" at "/db/apps/tls-text/modules/ext-fo.xql";
 
 (:~
 
@@ -66,13 +66,13 @@ declare function model:apply($config as map(*), $input as node()*) {
                     fo:break($config, ., "cb", ., 'column', @n)
                 case element(choice) return
                     if (sic and corr) then
-                        fo:alternate($config, ., "choice4", ., corr[1], sic[1])
+                        ext-fo:alternate($config, ., "choice4", ., corr[1], sic[1])
                     else
                         if (abbr and expan) then
-                            fo:alternate($config, ., "choice5", ., expan[1], abbr[1])
+                            ext-fo:alternate($config, ., "choice5", ., expan[1], abbr[1])
                         else
                             if (orig and reg) then
-                                fo:alternate($config, ., "choice6", ., reg[1], orig[1])
+                                ext-fo:alternate($config, ., "choice6", ., reg[1], orig[1])
                             else
                                 $config?apply($config, ./node())
                 case element(cit) return
@@ -484,9 +484,9 @@ declare function model:apply($config as map(*), $input as node()*) {
                 case element(rhyme) return
                     fo:inline($config, ., "rhyme", .)
                 case element(app) return
-                    fo:alternate($config, ., "app", ., lem, (rdg,note))
+                    ext-fo:alternate($config, ., "app", ., lem, (rdg,note))
                 case element(lem) return
-                    fo:inline($config, ., "lem", .)
+                    fo:inline($config, ., "lem2", .)
                 case text() | xs:anyAtomicType return
                     fo:escapeChars(.)
                 default return 
