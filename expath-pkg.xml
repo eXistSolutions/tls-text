@@ -2,4 +2,5 @@
 <package xmlns="http://expath.org/ns/pkg" name="http://existsolutions.com/apps/TLS/texts" abbrev="tls-text" version="0.1" spec="1.0">
     <title>TLS Texts</title>
     <dependency package="http://exist-db.org/apps/shared"/>
+    <dependency package="http://www.tei-c.org/tei-simple"/>
 </package>
