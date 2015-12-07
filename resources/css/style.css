@@ -6,7 +6,7 @@ footer .poweredby img {
   width: 120px;
 }
 body {
-  padding-top: 70px;
+  padding-top: 95px;
 }
 .browse {
   font-size: 1em !important;
@@ -23,7 +23,7 @@ body {
 @media (min-width: 768px) {
   .toc {
     position: fixed;
-    top: 51px;
+    top: 76px;
     bottom: 0;
     left: 0;
     z-index: 1000;
@@ -41,7 +41,11 @@ body {
   }
 }
 .navbar-default {
-  margin-bottom: 0;
+  margin-bottom: 20px;
+}
+.navbar-brand {
+  padding: 0;
+  height: 75px;
 }
 .main {
   margin-top: 50px;
